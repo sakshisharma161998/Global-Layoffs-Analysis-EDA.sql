@@ -1,15 +1,15 @@
 # Global-Layoffs-Analysis-EDA.sql
-Overview
+--Overview
 
 This project explores global layoffs data using SQL. The main objective is to clean, standardize, and analyze the data to uncover trends in workforce reductions across companies, industries, and countries over time.
 
-Dataset
+--Dataset
 
-Source: -- https://www.kaggle.com/datasets/swaptr/layoffs-2022
+--Source: -- https://www.kaggle.com/datasets/swaptr/layoffs-2022
 
 Description: The dataset contains information about layoffs globally, including company names, industry, location, total laid-off employees, percentage of workforce affected, dates, funding stage, country, and funds raised.
 
-Project Objective
+--Project Objective
 
 Clean the raw data and create a reliable staging table.
 
@@ -19,43 +19,44 @@ Perform Exploratory Data Analysis (EDA) to identify trends and patterns.
 
 Highlight top companies with the most layoffs and monthly/annual trends.
 
-SQL Queries Used
-Data Cleaning
+--SQL Queries Used
 
-Removed duplicates using ROW_NUMBER() and DENSE_RANK().
+-Data Cleaning
 
-Trimmed whitespaces in company names.
+-Removed duplicates using ROW_NUMBER() and DENSE_RANK().
 
-Standardized industry and country names.
+-Trimmed whitespaces in company names.
 
-Converted date column from text to DATE format.
+-Standardized industry and country names.
 
-Handled NULL and empty values in key columns.
+-Converted date column from text to DATE format.
 
-Exploratory Data Analysis (EDA)
+-Handled NULL and empty values in key columns.
 
-Calculated rolling total of layoffs per month.
+-Exploratory Data Analysis (EDA)
 
-Ranked companies by total layoffs per year using window functions.
+-Calculated rolling total of layoffs per month.
 
-Identified top 5 companies with highest layoffs each year.
+-Ranked companies by total layoffs per year using window functions.
 
-Insights
+-Identified top 5 companies with highest layoffs each year.
 
-Standardized data enabled accurate aggregation and ranking.
+-Insights
 
-Monthly and yearly trends revealed peaks in layoffs across industries.
+-Standardized data enabled accurate aggregation and ranking.
 
-Certain companies consistently appeared in top layoffs per year.
+-Monthly and yearly trends revealed peaks in layoffs across industries.
 
-Rolling totals helped visualize overall workforce reduction trends.
+-Certain companies consistently appeared in top layoffs per year.
 
-Skills Demonstrated
+-Rolling totals helped visualize overall workforce reduction trends.
 
-SQL Data Cleaning & Transformation
+--Skills Demonstrated
 
-Use of CTEs, Window Functions, and Aggregations
+-SQL Data Cleaning & Transformation
 
-Exploratory Data Analysis (EDA)
+-Use of CTEs, Window Functions, and Aggregations
 
-Handling NULLs, duplicates, and inconsistent data
+-Exploratory Data Analysis (EDA)
+
+-Handling NULLs, duplicates, and inconsistent data
