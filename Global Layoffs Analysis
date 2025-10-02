@@ -1,0 +1,160 @@
+SQL Project: Global Layoffs Analysis
+-- Author: [Sakshi Sharma]
+-- Description:
+-- This project explores global layoffs data using SQL.
+-- The main objectives are:
+-- 1. Clean raw layoff data (duplicates, nulls, inconsistent formats)
+-- 2. Standardize fields (company names, industries, countries, dates)
+-- 3. Perform Exploratory Data Analysis (EDA)
+-- 4. Generate insights on global layoff trends
+-- --------------------------------------------------
+
+
+-- STEP 1: Select the database
+USE world_layoffs;
+
+
+-- STEP 2: Inspect the raw data
+SELECT * FROM layoffs;
+
+
+-- --------------------------------------------------
+-- DATA CLEANING
+-- --------------------------------------------------
+-- Create a staging table to keep raw data intact and work on a copy
+CREATE TABLE layoffs_staging LIKE layoffs;
+INSERT layoffs_staging SELECT * FROM layoffs;
+
+
+-- 1. Remove duplicates
+-- Check for duplicates by partitioning on key columns
+WITH duplicate_cte AS (
+SELECT *,
+ROW_NUMBER() OVER(PARTITION BY company, location, industry, total_laid_off,
+percentage_laid_off, `date`, stage, country, funds_raised_millions) AS row_num
+FROM layoffs_staging
+)
+SELECT * FROM duplicate_cte WHERE row_num > 1;
+
+
+-- Create a second staging table with row numbers for easier duplicate deletion
+CREATE TABLE layoffs_staging2 (
+company TEXT,
+location TEXT,
+industry TEXT,
+total_laid_off INT DEFAULT NULL,
+percentage_laid_off TEXT,
+`date` TEXT,
+stage TEXT,
+country TEXT,
+funds_raised_millions INT DEFAULT NULL,
+row_num INT
+);
+
+INSERT INTO layoffs_staging2
+SELECT *,
+ROW_NUMBER() OVER(PARTITION BY company, location, industry, total_laid_off,
+percentage_laid_off, `date`, stage, country, funds_raised_millions) AS row_num
+FROM layoffs_staging;
+
+
+-- Delete true duplicates
+DELETE FROM layoffs_staging2 WHERE row_num > 1;
+
+
+-- Drop row_num column as it is no longer needed
+ALTER TABLE layoffs_staging2 DROP COLUMN row_num;
+
+
+-- 2. Standardize Data
+-- Trim company names
+UPDATE layoffs_staging2
+SET company = TRIM(company);
+
+
+-- Standardize Industry names (e.g., all "Crypto" variations → "Crypto")
+UPDATE layoffs_staging2
+SET industry = 'Crypto'
+WHERE industry LIKE 'Crypto%';
+
+
+-- Standardize Country names (remove trailing period)
+UPDATE layoffs_staging2
+SET country = TRIM(TRAILING '.' FROM country)
+WHERE country LIKE 'United States%';
+
+
+-- Fix Date column: convert text → DATE format
+UPDATE layoffs_staging2
+SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
+
+
+ALTER TABLE layoffs_staging2 MODIFY COLUMN `date` DATE;
+
+
+-- Handle Null or Blank Industry Values
+UPDATE layoffs_staging2
+SET industry = NULL WHERE industry = '';
+
+
+-- Populate missing industries by matching companies with known industries
+UPDATE layoffs_staging2 t1
+JOIN layoffs_staging2 t2 ON t1.company = t2.company
+SET t1.industry = t2.industry
+WHERE t1.industry IS NULL AND t2.industry IS NOT NULL;
+
+
+-- Remove rows where both layoff counts and percentage are missing
+DELETE FROM layoffs_staging2
+WHERE total_laid_off IS NULL AND percentage_laid_off IS NULL;
+
+-- --------------------------------------------------
+-- EXPLORATORY DATA ANALYSIS (EDA)
+-- --------------------------------------------------
+
+
+-- 1. Rolling Total of Layoffs Per Month
+WITH rollingtotal AS (
+SELECT SUBSTRING(`date`, 1,7) AS month,
+SUM(total_laid_off) AS total_sum
+FROM layoffs_staging2
+WHERE SUBSTRING(`date`, 1,7) IS NOT NULL
+GROUP BY 1
+)
+SELECT month, total_sum,
+SUM(total_sum) OVER(ORDER BY month) AS roll_sum
+FROM rollingtotal;
+
+
+-- 2. Companies with Highest Layoffs Per Year
+WITH high_lay_off AS (
+SELECT company, YEAR(`date`) AS year, SUM(total_laid_off) AS total_sum
+FROM layoffs_staging2
+GROUP BY company, YEAR(`date`)
+), company_rank AS (
+SELECT *, DENSE_RANK() OVER(PARTITION BY year ORDER BY total_sum DESC) AS rank_layoff
+FROM high_lay_off
+WHERE year IS NOT NULL
+)
+SELECT *
+FROM company_rank
+WHERE rank_layoff <= 5;
+
+
+-- --------------------------------------------------
+-- PROJECT SUMMARY
+-- --------------------------------------------------
+-- Objective: To analyze global layoffs data using SQL by performing data cleaning,
+-- standardization, and exploratory analysis.
+-- Key Insights:
+-- * Standardized messy data (industries, countries, dates)
+-- * Removed duplicates and irrelevant rows
+-- * Calculated rolling layoffs over time to observe trends
+-- * Identified top companies with the highest layoffs each year
+-- Skills Demonstrated:
+-- * Data Cleaning in SQL
+-- * CTEs, Window Functions, Aggregations
+-- * Exploratory Data Analysis (EDA)
+-- Outcome:
+-- This project shows how SQL can be used to clean raw datasets and extract valuable
+-- business insights about workforce reduction trends globally.
